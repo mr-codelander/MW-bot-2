@@ -4,3 +4,4 @@ requests
 jdatetime
 Pillow
 psycopg2-binary
+mcstatus
