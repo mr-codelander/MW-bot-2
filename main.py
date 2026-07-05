@@ -195,7 +195,7 @@ class MinecraftStatus:
             "plugins":data.get("plugins",[]),
             "mods":data.get("mods",[])
 		}
-	async def mcsrvstat(self, address):
+    async def mcsrvstat(self, address):
 
         session = await self.get_session()
 
