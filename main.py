@@ -65,11 +65,7 @@ WELCOME_MESSAGE = """سلام! 👋
 async def start(bot, message):
 	if message.chat_id in ACTIVE_GROUPS:
     	await message.reply(
-        	"ربات فعاله!\n\n"
-        	"دستورات:\n"
-        	"/status <ip> : نمایش وضعیت سرور\n\n"
-        	"برای تبلیغ سرور خود به این آیدی مراجعه کنید:\n"
-        	"@mr_war_aparat"
+        	"ربات فعاله!\n\nدستورات:\n/status <ip> : نمایش وضعیت سرور\n\nبرای تبلیغ سرور خود به این آیدی مراجعه کنید:\n@mr_war_aparat"
     	)
     else:
     	ACTIVE_GROUPS[message.chat_id] = True
