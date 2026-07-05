@@ -79,6 +79,7 @@ async def handler_ads(bot, message):
 # ------------------ STATUS ------------------
 
 import aiohttp
+from mcstatus import JavaServer
 
 @bot.on_message(commands=["status"])
 async def status(bot, message):
@@ -89,56 +90,45 @@ async def status(bot, message):
             "❌ استفاده:\n/status <ip>\nمثال:\n/status mc.hypixel.net"
         )
 
-    ip = message.args[0]
+    address = message.args[0]
 
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                f"https://api.mcstatus.io/v2/status/java/{ip}",
-                timeout=10
-            ) as r:
-                data = await r.json()
+        if ":" in address:
+            host, port = address.split(":")
+            server = JavaServer(host, int(port))
+        else:
+            server = JavaServer.lookup(address)
 
-        if not data.get("online"):
-            return await message.reply(
-                f"🔴 سرور `{ip}` آفلاین است."
-            )
+        status = await server.async_status()
 
-        hostname = data.get("hostname", ip)
+        motd = status.description
 
-        motd = "ندارد"
-        if data.get("motd"):
-            clean = data["motd"].get("clean")
-            if clean:
-                motd = "\n".join(clean)
+        if isinstance(motd, dict):
+            motd = motd.get("text", "")
+        elif isinstance(motd, list):
+            motd = "".join(str(x) for x in motd)
 
-        players = data.get("players", {})
-        version = data.get("version", {})
-        software = data.get("software") or {}
-        mapinfo = data.get("map") or {}
-        mods = data.get("mods") or {}
-        plugins = data.get("plugins") or {}
+        motd = str(motd)
 
-        online = players.get("online", 0)
-        maximum = players.get("max", 0)
+        latency = round(status.latency, 1)
+
+        version = status.version.name
+        protocol = status.version.protocol
+
+        online = status.players.online
+        maximum = status.players.max
 
         player_list = "-"
-        if players.get("list"):
-            player_list = "\n".join("• "+x["name_clean"] for x in players["list"][:20])
 
-        protocol = version.get("protocol", "-")
-        version_name = version.get("name_clean", "-")
+        if status.players.sample:
+            player_list = "\n".join(
+                f"• {p.name}" for p in status.players.sample
+            )
 
-        latency = data.get("roundTripLatency", "-")
-
-        brand = software.get("brand", "-")
-        software_version = software.get("version", "-")
-
-        text = f"""
-🟢 Minecraft Server
+        text = f"""🟢 Minecraft Server
 
 🌍 IP
-`{hostname}`
+`{address}`
 
 📡 Status
 Online
@@ -150,26 +140,13 @@ Online
 {online}/{maximum}
 
 🎮 Version
-{version_name}
+{version}
 
 🔢 Protocol
 {protocol}
 
 ⚡ Ping
 {latency} ms
-
-🖥 Software
-{brand}
-{software_version}
-
-🗺 Map
-{mapinfo.get("clean_name","-")}
-
-🧩 Plugins
-{plugins.get("names","-")}
-
-🛠 Mods
-{mods.get("names","-")}
 
 👤 Online Players
 {player_list}
@@ -178,7 +155,12 @@ Online
         await message.reply(text)
 
     except Exception as e:
-        await message.reply(f"❌ Error:\n{e}")
+        await message.reply(f"""🔴 Server Offline
+
+IP: `{address}`
+
+Error:
+`{e}`""")
 
 # ------------------ MAIN ------------------
 
