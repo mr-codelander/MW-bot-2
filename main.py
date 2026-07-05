@@ -61,7 +61,7 @@ WELCOME_MESSAGE = """سلام! 👋
 
 # ------------------ START ------------------
 
-@bot.on_message(filters.command("start"))
+@bot.on_message(commands=["start"])
 async def start(bot, message):
 	if message.chat_id in ACTIVE_GROUPS:
 		return await message.reply("ربات فعاله!\n\nدستورات:\n/status <ip> : نمایش وضعیت سرور\n\nبرای تبلیغ سرور خود به این آیدی مراجعه کنید:\n@mr_war_aparat")
@@ -80,7 +80,7 @@ async def handler_ads(bot, message):
 
 import aiohttp
 
-@bot.on_message(filters.command("status"))
+@bot.on_message(commands=["status"])
 async def status(bot, message):
     if not message.chat_id in ACTIVE_GROUPS:
     	return
