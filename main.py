@@ -96,11 +96,7 @@ async def status(bot, message):
     address = message.args[0]
 
     try:
-        if ":" in address:
-            host, port = address.split(":")
-            server = JavaServer(host, int(port))
-        else:
-            server = JavaServer(address, 25565)
+        server = JavaServer.lookup(address if ":" in address else f"{address}:25565")
 
         status = await server.async_status()
 
