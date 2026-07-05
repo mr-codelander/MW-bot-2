@@ -67,8 +67,8 @@ async def start(bot, message):
 		return await message.reply("ربات فعاله!\n\nدستورات:\n/status <ip> : نمایش وضعیت سرور\n\nبرای تبلیغ سرور خود به این آیدی مراجعه کنید:\n@mr_war_aparat")
 	else:
 		ACTIVE_GROUPS[message.chat_id] = True
-		save_active_groups(ACTIVE_GROUPS)
 		return await message.reply(WELCOME_MESSAGE)
+		save_active_groups(ACTIVE_GROUPS)
 
 @bot.on_message()
 async def handler_ads(bot, message):
