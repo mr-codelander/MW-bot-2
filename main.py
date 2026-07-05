@@ -64,11 +64,11 @@ WELCOME_MESSAGE = """سلام! 👋
 @bot.on_message(filters.command("start"))
 async def start(bot, message):
 	if message.chat_id in ACTIVE_GROUPS:
-		await message.reply("ربات فعاله!\n\nدستورات:\n/status <ip> : نمایش وضعیت سرور\n\nبرای تبلیغ سرور خود به این آیدی مراجعه کنید:\n@mr_war_aparat")
-    else:
+		return await message.reply("ربات فعاله!\n\nدستورات:\n/status <ip> : نمایش وضعیت سرور\n\nبرای تبلیغ سرور خود به این آیدی مراجعه کنید:\n@mr_war_aparat")
+	else:
     	ACTIVE_GROUPS[message.chat_id] = True
     	save_active_groups(ACTIVE_GROUPS)
-    	await message.reply()
+    	return await message.reply(WELCOME_MESSAGE)
 
 @bot.on_message()
 async def handler_ads(bot, message):
