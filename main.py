@@ -327,7 +327,7 @@ async def status(bot, message):
 
     address = message.args[0]
 
-    msg = await message.reply("🔍 درحال بررسی سرور...")
+    msg = await message.reply("🔍 درحال بررسی سرور...\nمنتظر بمون!")
 
     try:
 
@@ -345,32 +345,6 @@ async def status(bot, message):
 {info.get("error","Unknown")}
 """
             )
-
-        plugins = "-"
-
-        if info["plugins"]:
-            plugins = "\n".join(
-                f"• {x}" for x in info["plugins"]
-            )
-
-        mods = "-"
-
-        if info["mods"]:
-            mods = "\n".join(
-                f"• {x}" for x in info["mods"]
-            )
-
-        players = "-"
-
-        if info["players"]:
-            players = "\n".join(
-                f"• {x}" for x in info["players"]
-            )
-
-        motd = info["motd"].strip()
-
-        if not motd:
-            motd = "-"
 
         text = f"""🟢 Minecraft Server
 
