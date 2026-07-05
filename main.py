@@ -59,6 +59,270 @@ WELCOME_MESSAGE = """سلام! 👋
 عضو شوید
 و بعد مجدد /start را بزنید ❤️"""
 
+import socket
+import aiohttp
+from mcstatus import JavaServer
+
+class MinecraftStatus:
+
+    def __init__(self):
+        self.timeout = 5
+        self.session = None
+
+    async def get_session(self):
+        if self.session is None or self.session.closed:
+            self.session = aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=self.timeout)
+            )
+        return self.session
+
+    async def close(self):
+        if self.session and not self.session.closed:
+            await self.session.close()
+
+    async def status(self, address):
+        methods = [
+            self.mcstatus_method,
+            self.mcstatusio,
+            self.mcsrvstat,
+            self.mcsrvstat_v3,
+            self.direct_socket
+        ]
+
+        last_error = None
+
+        for method in methods:
+            try:
+                result = await method(address)
+                if result and result.get("online"):
+                    return result
+            except Exception as e:
+                last_error = e
+
+        return {
+            "online": False,
+            "error": str(last_error) if last_error else "Unknown"
+        }
+
+    async def mcstatus_method(self, address):
+
+        if ":" in address:
+            server = JavaServer.lookup(address)
+        else:
+            server = JavaServer.lookup(f"{address}:25565")
+
+        status = await server.async_status()
+
+        players = []
+
+        if status.players.sample:
+            players = [p.name for p in status.players.sample]
+
+        motd = status.description
+
+        if isinstance(motd, dict):
+            motd = motd.get("text", "")
+
+        elif isinstance(motd, list):
+            motd = "".join(map(str, motd))
+
+        return {
+            "online": True,
+            "ip": address,
+            "motd": str(motd),
+            "version": status.version.name,
+            "protocol": status.version.protocol,
+            "online_players": status.players.online,
+            "max_players": status.players.max,
+            "ping": round(status.latency,1),
+            "players": players,
+            "software": "-",
+            "map": "-",
+            "plugins": [],
+            "mods": []
+        }
+
+    async def mcstatusio(self,address):
+
+        session = await self.get_session()
+
+        async with session.get(
+            f"https://api.mcstatus.io/v2/status/java/{address}"
+        ) as r:
+
+            if r.status != 200:
+                raise Exception("HTTP")
+
+            data = await r.json()
+
+        if not data.get("online"):
+            raise Exception("Offline")
+
+        motd=""
+
+        clean=data.get("motd",{}).get("clean","")
+
+        if isinstance(clean,list):
+            if clean and all(len(str(i))==1 for i in clean):
+                motd="".join(clean)
+            else:
+                motd="\n".join(clean)
+        else:
+            motd=str(clean)
+
+        players=[]
+
+        plist=data.get("players",{}).get("list",[])
+
+        for p in plist:
+            if isinstance(p,dict):
+                players.append(p.get("name",""))
+            else:
+                players.append(str(p))
+
+        return{
+            "online":True,
+            "ip":address,
+            "motd":motd,
+            "version":data.get("version",{}).get("name","-"),
+            "protocol":data.get("version",{}).get("protocol","-"),
+            "online_players":data.get("players",{}).get("online",0),
+            "max_players":data.get("players",{}).get("max",0),
+            "ping":data.get("debug",{}).get("ping","-"),
+            "players":players,
+            "software":data.get("software","-"),
+            "map":data.get("map","-"),
+            "plugins":data.get("plugins",[]),
+            "mods":data.get("mods",[])
+		}
+		async def mcsrvstat(self, address):
+
+        session = await self.get_session()
+
+        async with session.get(
+            f"https://api.mcsrvstat.us/3/{address}"
+        ) as r:
+
+            if r.status != 200:
+                raise Exception("HTTP")
+
+            data = await r.json()
+
+        if not data.get("online"):
+            raise Exception("Offline")
+
+        players = []
+
+        if data.get("players") and data["players"].get("list"):
+            for p in data["players"]["list"]:
+                players.append(str(p))
+
+        motd = ""
+
+        if data.get("motd"):
+            motd = "\n".join(data["motd"].get("clean", []))
+
+        return {
+            "online": True,
+            "ip": address,
+            "motd": motd,
+            "version": data.get("version", "-"),
+            "protocol": "-",
+            "online_players": data.get("players", {}).get("online", 0),
+            "max_players": data.get("players", {}).get("max", 0),
+            "ping": "-",
+            "players": players,
+            "software": data.get("software", "-"),
+            "map": data.get("map", "-"),
+            "plugins": data.get("plugins", []),
+            "mods": data.get("mods", [])
+        }
+
+
+    async def mcsrvstat_v3(self, address):
+
+        session = await self.get_session()
+
+        async with session.get(
+            f"https://api.mcsrvstat.us/2/{address}"
+        ) as r:
+
+            if r.status != 200:
+                raise Exception("HTTP")
+
+            data = await r.json()
+
+        if not data.get("online"):
+            raise Exception("Offline")
+
+        motd = ""
+
+        if data.get("motd"):
+
+            if isinstance(data["motd"], list):
+                motd = "\n".join(data["motd"])
+            else:
+                motd = str(data["motd"])
+
+        return {
+            "online": True,
+            "ip": address,
+            "motd": motd,
+            "version": data.get("version", "-"),
+            "protocol": "-",
+            "online_players": data.get("players", {}).get("online", 0),
+            "max_players": data.get("players", {}).get("max", 0),
+            "ping": "-",
+            "players": data.get("players", {}).get("list", []),
+            "software": "-",
+            "map": data.get("map", "-"),
+            "plugins": [],
+            "mods": []
+        }
+
+
+    async def direct_socket(self, address):
+
+        if ":" in address:
+            host, port = address.split(":")
+            port = int(port)
+        else:
+            host = address
+            port = 25565
+
+        loop = asyncio.get_running_loop()
+
+        try:
+            reader, writer = await asyncio.wait_for(
+                asyncio.open_connection(host, port),
+                timeout=3
+            )
+
+            writer.close()
+
+            try:
+                await writer.wait_closed()
+            except:
+                pass
+
+            return {
+                "online": True,
+                "ip": address,
+                "motd": "",
+                "version": "-",
+                "protocol": "-",
+                "online_players": 0,
+                "max_players": 0,
+                "ping": "-",
+                "players": [],
+                "software": "-",
+                "map": "-",
+                "plugins": [],
+                "mods": []
+            }
+
+        except Exception:
+            raise Exception("Socket connection failed")
 # ------------------ START ------------------
 
 @bot.on_message(commands=["start"])
@@ -77,17 +341,15 @@ async def handler_ads(bot, message):
             for i in ACTIVE_GROUPS:
                 await bot.send_message(chat_id=i, text=tads)
 # ------------------ STATUS ------------------
+status_checker = MinecraftStatus()
 
-import aiohttp
-from mcstatus import JavaServer
-import importlib.metadata
-
-print(importlib.metadata.version("mcstatus"))
 
 @bot.on_message(commands=["status"])
 async def status(bot, message):
-    if not message.chat_id in ACTIVE_GROUPS:
-    	return
+
+    if message.chat_id not in ACTIVE_GROUPS:
+        return
+
     if not message.args:
         return await message.reply(
             "❌ استفاده:\n/status <ip>\nمثال:\n/status mc.hypixel.net"
@@ -95,39 +357,55 @@ async def status(bot, message):
 
     address = message.args[0]
 
+    msg = await message.reply("🔍 درحال بررسی سرور...")
+
     try:
-        server = JavaServer.lookup(address if ":" in address else f"{address}:25565")
 
-        status = await server.async_status()
+        info = await status_checker.status(address)
 
-        motd = status.description
+        if not info["online"]:
+            return await msg.edit(
+                f"""🔴 Server Offline
 
-        if isinstance(motd, dict):
-            motd = motd.get("text", "")
-        elif isinstance(motd, list):
-            motd = "".join(str(x) for x in motd)
+🌍 IP
+`{address}`
 
-        motd = str(motd)
+❌ Error
 
-        latency = round(status.latency, 1)
-
-        version = status.version.name
-        protocol = status.version.protocol
-
-        online = status.players.online
-        maximum = status.players.max
-
-        player_list = "-"
-
-        if status.players.sample:
-            player_list = "\n".join(
-                f"• {p.name}" for p in status.players.sample
+{info.get("error","Unknown")}
+"""
             )
+
+        plugins = "-"
+
+        if info["plugins"]:
+            plugins = "\n".join(
+                f"• {x}" for x in info["plugins"]
+            )
+
+        mods = "-"
+
+        if info["mods"]:
+            mods = "\n".join(
+                f"• {x}" for x in info["mods"]
+            )
+
+        players = "-"
+
+        if info["players"]:
+            players = "\n".join(
+                f"• {x}" for x in info["players"]
+            )
+
+        motd = info["motd"].strip()
+
+        if not motd:
+            motd = "-"
 
         text = f"""🟢 Minecraft Server
 
 🌍 IP
-`{address}`
+`{info['ip']}`
 
 📡 Status
 Online
@@ -136,30 +414,50 @@ Online
 {motd}
 
 👥 Players
-{online}/{maximum}
+{info['online_players']}/{info['max_players']}
 
 🎮 Version
-{version}
+{info['version']}
 
 🔢 Protocol
-{protocol}
+{info['protocol']}
 
 ⚡ Ping
-{latency} ms
+{info['ping']} ms
+
+🖥 Software
+{info['software']}
+
+🗺 Map
+{info['map']}
+
+🧩 Plugins
+{plugins}
+
+🛠 Mods
+{mods}
 
 👤 Online Players
-{player_list}
+{players}
 """
 
-        await message.reply(text)
+        await msg.edit(text)
 
     except Exception as e:
-        await message.reply(f"""🔴 Server Offline
 
-IP: `{address}`
+        await msg.edit(
+            f"""🔴 Server Offline
 
-Error:
-`{e}`""")
+🌍 IP
+`{address}`
+
+❌ Error
+
+`{e}`
+"""
+		)
+
+
 
 # ------------------ MAIN ------------------
 
