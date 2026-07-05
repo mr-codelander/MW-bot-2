@@ -80,6 +80,8 @@ async def handler_ads(bot, message):
 
 import aiohttp
 from mcstatus import JavaServer
+import mcstatus
+print(mcstatus.__version__)
 
 @bot.on_message(commands=["status"])
 async def status(bot, message):
