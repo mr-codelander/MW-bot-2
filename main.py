@@ -131,15 +131,9 @@ class MinecraftStatus:
             "ip": address,
             "motd": str(motd),
             "version": status.version.name,
-            "protocol": status.version.protocol,
             "online_players": status.players.online,
             "max_players": status.players.max,
-            "ping": round(status.latency,1),
-            "players": players,
-            "software": "-",
-            "map": "-",
-            "plugins": [],
-            "mods": []
+            "ping": round(status.latency,1)
         }
 
     async def mcstatusio(self,address):
@@ -185,15 +179,9 @@ class MinecraftStatus:
             "ip":address,
             "motd":motd,
             "version":data.get("version",{}).get("name","-"),
-            "protocol":data.get("version",{}).get("protocol","-"),
             "online_players":data.get("players",{}).get("online",0),
             "max_players":data.get("players",{}).get("max",0),
-            "ping":data.get("debug",{}).get("ping","-"),
-            "players":players,
-            "software":data.get("software","-"),
-            "map":data.get("map","-"),
-            "plugins":data.get("plugins",[]),
-            "mods":data.get("mods",[])
+            "ping":data.get("debug",{}).get("ping","-")
 		}
     async def mcsrvstat(self, address):
 
@@ -227,15 +215,9 @@ class MinecraftStatus:
             "ip": address,
             "motd": motd,
             "version": data.get("version", "-"),
-            "protocol": "-",
             "online_players": data.get("players", {}).get("online", 0),
             "max_players": data.get("players", {}).get("max", 0),
-            "ping": "-",
-            "players": players,
-            "software": data.get("software", "-"),
-            "map": data.get("map", "-"),
-            "plugins": data.get("plugins", []),
-            "mods": data.get("mods", [])
+            "ping": "-"
         }
 
 
@@ -269,15 +251,9 @@ class MinecraftStatus:
             "ip": address,
             "motd": motd,
             "version": data.get("version", "-"),
-            "protocol": "-",
             "online_players": data.get("players", {}).get("online", 0),
             "max_players": data.get("players", {}).get("max", 0),
-            "ping": "-",
-            "players": data.get("players", {}).get("list", []),
-            "software": "-",
-            "map": data.get("map", "-"),
-            "plugins": [],
-            "mods": []
+            "ping": "-"
         }
 
 
@@ -310,15 +286,9 @@ class MinecraftStatus:
                 "ip": address,
                 "motd": "",
                 "version": "-",
-                "protocol": "-",
                 "online_players": 0,
                 "max_players": 0,
-                "ping": "-",
-                "players": [],
-                "software": "-",
-                "map": "-",
-                "plugins": [],
-                "mods": []
+                "ping": "-"
             }
 
         except Exception:
@@ -419,26 +389,8 @@ Online
 🎮 Version
 {info['version']}
 
-🔢 Protocol
-{info['protocol']}
-
 ⚡ Ping
 {info['ping']} ms
-
-🖥 Software
-{info['software']}
-
-🗺 Map
-{info['map']}
-
-🧩 Plugins
-{plugins}
-
-🛠 Mods
-{mods}
-
-👤 Online Players
-{players}
 """
 
         await msg.edit(text)
