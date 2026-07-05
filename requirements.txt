@@ -1,0 +1,6 @@
+rubka
+aiohttp
+requests
+jdatetime
+Pillow
+psycopg2-binary
