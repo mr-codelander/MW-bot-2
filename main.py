@@ -93,14 +93,42 @@ WELCOME_MESSAGE = """سلام! 👋
 @bot.on_message(commands=["start"])
 async def start(bot, message):
 	if message.chat_id in ACTIVE_GROUPS:
-		return await message.reply_keypad(
-			text=A_MESSAGE,
-			
+		keypad = (
+            ChatKeypadBuilder()
+
+            .row(
+                ChatKeypadBuilder.button_simple(
+                    id="servers",
+                    text="🌍 سرورهای ماینکرفت"
+                ),
+                ChatKeypadBuilder.button_simple(
+                    id="status",
+                    text="🔍 استعلام سرور"
+                )
+            )
+
+            .row(
+                ChatKeypadBuilder.button_simple(
+                    id="ads",
+                    text="📢 تبلیغات"
+                ),
+                ChatKeypadBuilder.button_simple(
+                    id="about",
+                    text="ℹ️ درباره ما"
+                )
+            )
+			.build()
 		)
+		await message.reply_keypad(
+			text=A_MESSAGE,
+			keypad=keypad
+		)
+		return
 	else:
 		ACTIVE_GROUPS[message.chat_id] = True
-		return await message.reply(WELCOME_MESSAGE)
+		await message.reply(WELCOME_MESSAGE)
 		save_active_groups(ACTIVE_GROUPS)
+		return
 
 @bot.on_message()
 async def handler_ads(bot, message):
