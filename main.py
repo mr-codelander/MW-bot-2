@@ -101,7 +101,7 @@ async def start(bot, message):
                     id="servers",
                     text="🌍 سرورهای ماینکرفت"
                 ),
-                ChatKeypadBuilder.button_simple(
+                ChatKeypadBuilder.button_textbox(
                     id="status",
                     text="🔍 استعلام سرور"
                 )
