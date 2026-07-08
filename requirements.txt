@@ -1,7 +1,10 @@
 rubka
+mcstatus==12.0.5
+dnspython==2.7.0
+requests==2.32.4
+cachetools==5.5.2
 aiohttp
 requests
 jdatetime
 Pillow
 psycopg2-binary
-mcstatus
