@@ -12,7 +12,7 @@ from rubka.keypad import ChatKeypadBuilder
 # متن خوشامد
 # ==========================================
 
-WELCOME_MESSAGE = """
+A_MESSAGE = """
 🥳 ربات فعاله !
 از منوی زیر گزینه موردنظر خود را انتخاب کنید:
 """
@@ -28,9 +28,7 @@ SERVERS = [
     ("تیرکس ماین (جاوا)", "play.trexmine.com"),
     ("اپکس ماین (بدراک)", "play.apexgaming.ir"),
     ("گان مکس (جاوا)", "play.gunmax.org"),
-    ("بی‌قانون‌آباد (جاوا و بدراک)", "mc.bigmc.ir"),
-    ("ماین سیتی (جاوا)", "play.minecity.ir"),
-    ("پرشیا کرفت (جاوا)", "play.persiacraft.ir"),
+    ("بی‌قانون‌آباد (جاوا و بدراک)", "mc.bigmc.ir")
 ]
 TOKEN = "BIHJFI0MEOTMVGGAXRABWENZHWJGBQDPLVWMTRMLPIYWBPMRBLTTXPKQZYHHUVVJ"
 
@@ -95,7 +93,10 @@ WELCOME_MESSAGE = """سلام! 👋
 @bot.on_message(commands=["start"])
 async def start(bot, message):
 	if message.chat_id in ACTIVE_GROUPS:
-		return await message.reply("ربات فعاله!\n\nدستورات:\n/status <ip> : نمایش وضعیت سرور\n\nبرای تبلیغ سرور خود به این آیدی مراجعه کنید:\n@mr_war_aparat")
+		return await message.reply_keypad(
+			text=A_MESSAGE,
+			
+		)
 	else:
 		ACTIVE_GROUPS[message.chat_id] = True
 		return await message.reply(WELCOME_MESSAGE)
