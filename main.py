@@ -1,6 +1,37 @@
+# ==========================================
+# Import ها
+# ==========================================
+import socket
 import asyncio
-from rubka import Robot, filters
+import requests
 
+from rubka import Bot
+from rubka.filters import Filters
+from rubka.keypad import ChatKeypadBuilder
+# ==========================================
+# متن خوشامد
+# ==========================================
+
+WELCOME_MESSAGE = """
+🥳 ربات فعاله !
+از منوی زیر گزینه موردنظر خود را انتخاب کنید:
+"""
+# ==========================================
+# لیست سرورهای معروف
+# ==========================================
+
+SERVERS = [
+    ("هایپیکسل (جاوا)", "mc.hypixel.net"),
+    ("کیوب‌کرفت (جاوا و بدراک)", "play.cubecraft.net"),
+    ("ام‌سی‌سی آیلند (جاوا)", "play.mccisland.net"),
+    ("گیم آپ (جاوا)", "mc.gameup.ir"),
+    ("تیرکس ماین (جاوا)", "play.trexmine.com"),
+    ("اپکس ماین (بدراک)", "play.apexgaming.ir"),
+    ("گان مکس (جاوا)", "play.gunmax.org"),
+    ("بی‌قانون‌آباد (جاوا و بدراک)", "mc.bigmc.ir"),
+    ("ماین سیتی (جاوا)", "play.minecity.ir"),
+    ("پرشیا کرفت (جاوا)", "play.persiacraft.ir"),
+]
 TOKEN = "BIHJFI0MEOTMVGGAXRABWENZHWJGBQDPLVWMTRMLPIYWBPMRBLTTXPKQZYHHUVVJ"
 
 bot = Robot(
