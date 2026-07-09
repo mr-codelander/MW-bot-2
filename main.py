@@ -228,7 +228,6 @@ class MinecraftStatus:
                 "motd": str(status.description),
                 "icon": status.icon
             }
-
         except:
 			return None
 
