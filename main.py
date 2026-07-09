@@ -13,6 +13,7 @@ import dns.resolver
 from mcstatus import JavaServer
 
 from rubka import Robot
+from rubka import keypad
 from rubka.keypad import ChatKeypadBuilder
 
 
