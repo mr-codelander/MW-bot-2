@@ -20,7 +20,7 @@ from rubka.keypad import ChatKeypadBuilder
 # تنظیمات
 # ==========================================
 
-TOKEN = os.getenv("BIHJFI0MEOTMVGGAXRABWENZHWJGBQDPLVWMTRMLPIYWBPMRBLTTXPKQZYHHUVVJ")
+TOKEN = "BIHJFI0MEOTMVGGAXRABWENZHWJGBQDPLVWMTRMLPIYWBPMRBLTTXPKQZYHHUVVJ"
 
 bot = Robot(
     token=TOKEN,
