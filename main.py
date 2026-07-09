@@ -620,7 +620,7 @@ async def status(bot, message):
 
     result = MinecraftStatus.check(ip)
     await wait.edit(
-		MinecraftStatus.format_status(result)
+        MinecraftStatus.format_status(result)
     )
 
 # ------------------ تبلیغات ------------------
