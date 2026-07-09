@@ -415,7 +415,7 @@ class MinecraftStatus:
             "host": host,
             "online": False
 		}
-	@classmethod
+    @classmethod
     def format_status(cls, data):
 
         if not data.get("success"):
