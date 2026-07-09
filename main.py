@@ -566,7 +566,7 @@ async def start(bot, message):
 
         ACTIVE_GROUPS[message.chat_id] = True
         save_active_groups(ACTIVE_GROUPS)
-		await message.reply(WELCOME_MESSAGE)
+        await message.reply(WELCOME_MESSAGE)
 	else:
 		await message.reply_keypad(
             A_MESSAGE,
