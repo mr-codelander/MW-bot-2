@@ -3,6 +3,7 @@
 # ==========================================
 
 import os
+import traceback
 import time
 import socket
 import asyncio
@@ -56,14 +57,17 @@ conn.commit()
 A_MESSAGE = """
 🥳 ربات فعاله!
 
-از منوی زیر گزینه موردنظر خود را انتخاب کنید.
+از **منوی زیر** گزینه موردنظر خود را انتخاب کنید.
 """
 
 WELCOME_MESSAGE = """
 سلام 👋
 
-به ربات استعلام سرورهای ماینکرفت خوش آمدید.
-"""
+به ربات **سرورهای ماینکرفت** خوش آمدید.
+اگر در کانال زیر عضو نیستید:
+**@mr_bwars**
+عضو شوید 
+و سپس /start را وارد کنید❤️"""
 
 
 # ==========================================
@@ -528,47 +532,46 @@ minecraft = MinecraftStatus()
 
 @bot.on_message(commands=["start"])
 async def start(bot, message):
+    builder = ChatKeypadBuilder()
+
+    builder.row(
+        builder.button_simple(
+            id="servers",
+            text="🌍 سرورهای ماینکرفت"
+        ),
+        {
+            **builder.button_textbox(
+                id="status",
+                title="آیپی یا دامنه سرور را وارد کنید",
+                type_line="SingleLine",
+                type_keypad="String",
+                place_holder="mc.hypixel.net"
+            ),
+            "button_text": "🔍 استعلام سرور"
+        }
+    )
+
+    builder.row(
+        builder.button_simple(
+            id="ads",
+            text="📢 تبلیغات"
+        ),
+        builder.button_simple(
+            id="about",
+            text="ℹ️ درباره ما"
+        )
+	)
 
     if message.chat_id not in ACTIVE_GROUPS:
 
         ACTIVE_GROUPS[message.chat_id] = True
         save_active_groups(ACTIVE_GROUPS)
-
-    keypad = (
-        ChatKeypadBuilder()
-
-        .row(
-            keypad.button_simple(
-                id="servers",
-                text="🌍 سرورهای ماینکرفت"
-            ),
-            keypad.button_textbox(
-                id="status",
-                title="🔍 استعلام سرور",
-                type_line="SingleLine",
-                type_keypad="String",
-                place_holder="mc.hypixel.net"
-            )
-        )
-
-        .row(
-            keypad.button_simple(
-                id="ads",
-                text="📢 تبلیغات"
-            ),
-            keypad.button_simple(
-                id="about",
-                text="ℹ️ درباره ما"
-            )
-        )
-
-        .build()
-    )
-
-    await message.reply_keypad(
-        text=A_MESSAGE,
-        keypad=keypad
-    )
+		await message.reply(WELCOME_MESSAGE)
+	else:
+		await message.reply_keypad(
+            A_MESSAGE,
+			builder.build()
+		)
 
 
 # ------------------ لیست سرورها ------------------
@@ -662,8 +665,7 @@ async def handler_ads(bot, message):
 async def about(bot, message):
 
     await message.reply(
-        "ℹ️ ربات استعلام سرورهای ماینکرفت\n\n"
-        "نسخه 2.0"
+        "ℹ️ ربات سرورهای ماینکرفت\n\nساخته شده توسط **MW**\nver 2.0.10"
     )
 
 
