@@ -619,7 +619,7 @@ async def servers(bot, message):
 @bot.on_message(filters=lambda m: m.button_id == "status")
 async def status(bot, message):
 
-    ip = message.data.strip()
+    ip = message.text.strip()
 
     wait = await message.reply(
         "⏳ درحال بررسی سرور..."
