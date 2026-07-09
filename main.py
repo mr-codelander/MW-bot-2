@@ -581,7 +581,9 @@ async def start(bot, message):
 
 @bot.on_message(filters=lambda m: m.button_id == "servers")
 async def servers(bot, message):
-
+    wait = await message.reply(
+        "⏳ درحال بررسی سرور..."
+	)
     text = "🌍 لیست سرورهای ماینکرفت\n\n"
 
     for name, ip in SERVERS:
@@ -609,9 +611,8 @@ async def servers(bot, message):
             f"{emoji} {name}\n"
             f"🌐 `{ip}`\n"
             f"👥 {online}\n\n"
-        )
-
-    await message.reply(text)
+			
+    await wait.edit(text + "روی هر کدوم از آیپی ها کلیک کنی کپی میشه😉")
 
 
 # ------------------ استعلام ------------------
