@@ -566,9 +566,9 @@ async def start(bot, message):
 
         ACTIVE_GROUPS[message.chat_id] = True
         await message.reply(WELCOME_MESSAGE)
-		try:
+        try:
             save_active_groups(ACTIVE_GROUPS)
-		except :
+        except :
             pass
     else:
         await message.reply_keypad(
