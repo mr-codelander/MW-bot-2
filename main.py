@@ -229,9 +229,8 @@ class MinecraftStatus:
                 "icon": status.icon
             }
         except:
-			return None
-
-	@classmethod
+            return None
+    @classmethod
 	def api_mcsrvstat(cls, host):
         data = cls.request(
             f"https://api.mcsrvstat.us/3/{host}"
