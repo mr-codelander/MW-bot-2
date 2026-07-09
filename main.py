@@ -536,12 +536,12 @@ async def start(bot, message):
     keypad = (
         ChatKeypadBuilder()
 
-        .row(
-            ChatKeypadBuilder.button_simple(
+        keypad.row(
+            keypad.button_simple(
                 id="servers",
                 text="🌍 سرورهای ماینکرفت"
             ),
-            ChatKeypadBuilder.button_textbox(
+            keypad.button_textbox(
                 id="status",
                 title="🔍 استعلام سرور",
                 type_line="SingleLine",
@@ -550,12 +550,12 @@ async def start(bot, message):
             )
         )
 
-        .row(
-            ChatKeypadBuilder.button_simple(
+        keypad.row(
+            keypad.button_simple(
                 id="ads",
                 text="📢 تبلیغات"
             ),
-            ChatKeypadBuilder.button_simple(
+            keypad.button_simple(
                 id="about",
                 text="ℹ️ درباره ما"
             )
