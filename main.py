@@ -576,12 +576,10 @@ async def handler_ads(bot, message):
 #استاتوس
 @bot.on_message(filters=lambda m: m.button_id == "server_ip")
 def get_status(bot, message):
-
-    ip = message.data
+	ip = message.data
 	msg = message.reply("🔎 در حال بررسی سرور...")
-    result = MinecraftStatus.status(ip)
-
-    msg.edit(result)
+	result = MinecraftStatus.status(ip)
+	msg.edit(result)
 # ------------------ MAIN ------------------
 
 async def main():
