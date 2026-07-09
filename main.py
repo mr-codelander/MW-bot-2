@@ -232,7 +232,7 @@ class MinecraftStatus:
             return None
     @classmethod
 	def api_mcsrvstat(cls, host):
-        data = cls.request(
+		data = cls.request(
             f"https://api.mcsrvstat.us/3/{host}"
         )
         if not data:
