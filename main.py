@@ -192,41 +192,30 @@ class MinecraftStatus:
         try:
 
             return socket.gethostbyname(host)
-
         except:
-
             return None
 
     @staticmethod
     def srv(host):
-
         try:
-
             answer = dns.resolver.resolve(
                 "_minecraft._tcp." + host,
                 "SRV"
             )[0]
-
             return {
                 "host": str(answer.target).rstrip("."),
                 "port": int(answer.port)
             }
-
         except:
-
             return None
 
     @staticmethod
     def java(host, port=25565):
-
         try:
-
             server = JavaServer.lookup(
                 f"{host}:{port}"
             )
-
             status = server.status()
-
             return {
                 "success": True,
                 "edition": "Java",
@@ -241,21 +230,17 @@ class MinecraftStatus:
             }
 
         except:
+			return None
 
-            return None
 	@classmethod
-    def api_mcsrvstat(cls, host):
-
+	def api_mcsrvstat(cls, host):
         data = cls.request(
             f"https://api.mcsrvstat.us/3/{host}"
         )
-
         if not data:
             return None
-
         if not data.get("online"):
             return None
-
         players = data.get("players", {})
 
         return {
