@@ -1,70 +1,110 @@
 # ==========================================
 # Import ها
 # ==========================================
+
+import os
+import time
 import socket
 import asyncio
 import requests
+import psycopg2
+import dns.resolver
 
-from rubka import Bot
-from rubka.filters import Filters
+from mcstatus import JavaServer
+
+from rubka import Robot
 from rubka.keypad import ChatKeypadBuilder
+
+
 # ==========================================
-# متن خوشامد
+# تنظیمات
 # ==========================================
 
-A_MESSAGE = """
-🥳 ربات فعاله !
-از منوی زیر گزینه موردنظر خود را انتخاب کنید:
-"""
-# ==========================================
-# لیست سرورهای معروف
-# ==========================================
-
-SERVERS = [
-    ("هایپیکسل (جاوا)", "mc.hypixel.net"),
-    ("کیوب‌کرفت (جاوا و بدراک)", "play.cubecraft.net"),
-    ("ام‌سی‌سی آیلند (جاوا)", "play.mccisland.net"),
-    ("گیم آپ (جاوا)", "mc.gameup.ir"),
-    ("تیرکس ماین (جاوا)", "play.trexmine.com"),
-    ("اپکس ماین (بدراک)", "play.apexgaming.ir"),
-    ("گان مکس (جاوا)", "play.gunmax.org"),
-    ("بی‌قانون‌آباد (جاوا و بدراک)", "mc.bigmc.ir")
-]
-TOKEN = "BIHJFI0MEOTMVGGAXRABWENZHWJGBQDPLVWMTRMLPIYWBPMRBLTTXPKQZYHHUVVJ"
+TOKEN = os.getenv("BIHJFI0MEOTMVGGAXRABWENZHWJGBQDPLVWMTRMLPIYWBPMRBLTTXPKQZYHHUVVJ")
 
 bot = Robot(
     token=TOKEN,
     parse_mode="Markdown",
     api_endpoint="botapi"
 )
-import psycopg2
-import os
+
+
+# ==========================================
+# دیتابیس
+# ==========================================
 
 db_url = os.getenv("DATABASE_URL")
-print(repr(db_url))
 
 conn = psycopg2.connect(db_url)
 cur = conn.cursor()
 
 cur.execute("""
-CREATE TABLE IF NOT EXISTS ACTIVE_GROUPS (
-    guid TEXT PRIMARY KEY
+CREATE TABLE IF NOT EXISTS ACTIVE_GROUPS(
+    guid TEXT PRIMARY KEY,
+    active BOOLEAN NOT NULL
 )
 """)
+
 conn.commit()
-def save_active_groups(ACTIVE_GROUPS):
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS ACTIVE_GROUPS (
-            guid TEXT PRIMARY KEY,
-            active BOOLEAN NOT NULL
-        )
-    """)
+
+
+# ==========================================
+# متن ها
+# ==========================================
+
+A_MESSAGE = """
+🥳 ربات فعاله!
+
+از منوی زیر گزینه موردنظر خود را انتخاب کنید.
+"""
+
+WELCOME_MESSAGE = """
+سلام 👋
+
+به ربات استعلام سرورهای ماینکرفت خوش آمدید.
+"""
+
+
+# ==========================================
+# لیست سرورها
+# ==========================================
+
+SERVERS = [
+
+    ("هایپیکسل (جاوا)", "mc.hypixel.net"),
+
+    ("کیوب کرافت (جاوا و بدراک)", "play.cubecraft.net"),
+
+    ("ام سی سی آیلند (جاوا)", "play.mccisland.net"),
+
+    ("گیم آپ (جاوا)", "mc.gameup.ir"),
+
+    ("تیرکس ماین (جاوا)", "play.trexmine.com"),
+
+    ("اپکس ماین (بدراک)", "play.apexgaming.ir"),
+
+    ("گان مکس (جاوا)", "play.gunmax.org"),
+
+    ("بی قانون آباد (جاوا و بدراک)", "mc.bigmc.ir"),
+
+    ("وان بلاک (جاوا)", "play.oneblockmc.com"),
+
+    ("جارتکس (جاوا)", "jartex.fun")
+]
+
+
+# ==========================================
+# دیتابیس گروه ها
+# ==========================================
+
+def save_active_groups(data):
 
     cur.execute("DELETE FROM ACTIVE_GROUPS")
 
-    for guid, active in ACTIVE_GROUPS.items():
+    for guid, active in data.items():
+
         cur.execute(
-            "INSERT INTO ACTIVE_GROUPS (guid, active) VALUES (%s, %s)",
+            "INSERT INTO ACTIVE_GROUPS(guid,active) VALUES(%s,%s)",
             (guid, active)
         )
 
@@ -72,68 +112,89 @@ def save_active_groups(ACTIVE_GROUPS):
 
 
 def load_active_groups():
-    cur.execute("SELECT guid, active FROM ACTIVE_GROUPS")
+
+    cur.execute(
+        "SELECT guid,active FROM ACTIVE_GROUPS"
+    )
+
     rows = cur.fetchall()
 
-    return {guid: active for guid, active in rows}
-# ========== متغیرهای سراسری ==========
+    return {
+        guid: active
+        for guid, active in rows
+    }
+
+
 try:
+
     ACTIVE_GROUPS = load_active_groups()
+
 except:
+
     ACTIVE_GROUPS = {}
-WELCOME_MESSAGE = """سلام! 👋
-به ربات سرور های ماینکرفت خوش آمدید
-اگر در کانال زیر عضو نیستید ،
-📢 @mr_bwars
-عضو شوید
-و بعد مجدد /start را بزنید ❤️"""
-import socket
-import time
-import requests
-import dns.resolver
 
-from mcstatus import JavaServer
 
+# ==========================================
+# کلاس استعلام
+# ==========================================
 
 class MinecraftStatus:
 
     CACHE = {}
+
     CACHE_TIME = 30
 
-    # -----------------------------
-    # Cache
-    # -----------------------------
+    SERVERS = SERVERS
 
     @classmethod
     def get_cache(cls, key):
-        if key not in cls.CACHE:
+
+        item = cls.CACHE.get(key)
+
+        if not item:
             return None
 
-        data, created = cls.CACHE[key]
+        value, created = item
 
         if time.time() - created > cls.CACHE_TIME:
+
             del cls.CACHE[key]
+
             return None
 
-        return data
+        return value
 
     @classmethod
     def set_cache(cls, key, value):
+
         cls.CACHE[key] = (
             value,
             time.time()
         )
 
-    # -----------------------------
-    # DNS
-    # -----------------------------
+    @staticmethod
+    def request(url):
+
+        try:
+
+            return requests.get(
+                url,
+                timeout=5
+            ).json()
+
+        except:
+
+            return None
 
     @staticmethod
     def resolve(host):
 
         try:
+
             return socket.gethostbyname(host)
+
         except:
+
             return None
 
     @staticmethod
@@ -141,24 +202,19 @@ class MinecraftStatus:
 
         try:
 
-            answers = dns.resolver.resolve(
+            answer = dns.resolver.resolve(
                 "_minecraft._tcp." + host,
                 "SRV"
-            )
-
-            record = answers[0]
+            )[0]
 
             return {
-                "host": str(record.target).rstrip("."),
-                "port": int(record.port)
+                "host": str(answer.target).rstrip("."),
+                "port": int(answer.port)
             }
 
         except:
-            return None
 
-    # -----------------------------
-    # Java
-    # -----------------------------
+            return None
 
     @staticmethod
     def java(host, port=25565):
@@ -172,76 +228,22 @@ class MinecraftStatus:
             status = server.status()
 
             return {
-
                 "success": True,
-
                 "edition": "Java",
-
                 "host": host,
-
                 "port": port,
-
                 "version": status.version.name,
-
                 "players_online": status.players.online,
-
                 "players_max": status.players.max,
-
                 "latency": round(status.latency),
-
                 "motd": str(status.description),
-
                 "icon": status.icon
-
             }
-
-        except Exception:
-
-            return None
-
-    # -----------------------------
-    # API
-    # -----------------------------
-
-    @staticmethod
-    def request(url):
-
-        try:
-
-            return requests.get(
-                url,
-                timeout=4
-            ).json()
 
         except:
 
             return None
-
-    # -----------------------------
-    # Result
-    # -----------------------------
-
-    @staticmethod
-    def offline(host):
-
-        return {
-
-            "success": False,
-
-            "host": host,
-
-            "edition": None,
-
-            "online": False,
-
-            "reason": "سرور پیدا نشد."
-
-        }
-	# -----------------------------
-    # API : mcsrvstat.us
-    # -----------------------------
-
-    @classmethod
+	@classmethod
     def api_mcsrvstat(cls, host):
 
         data = cls.request(
@@ -271,10 +273,6 @@ class MinecraftStatus:
             "icon": data.get("icon")
         }
 
-    # -----------------------------
-    # API : mcstatus.io (Java)
-    # -----------------------------
-
     @classmethod
     def api_mcstatus_java(cls, host):
 
@@ -289,9 +287,7 @@ class MinecraftStatus:
             return None
 
         players = data.get("players", {})
-
         version = data.get("version", {})
-
         motd = data.get("motd", {})
 
         return {
@@ -309,10 +305,6 @@ class MinecraftStatus:
             "icon": data.get("icon")
         }
 
-    # -----------------------------
-    # API : mcstatus.io (Bedrock)
-    # -----------------------------
-
     @classmethod
     def api_mcstatus_bedrock(cls, host):
 
@@ -327,9 +319,7 @@ class MinecraftStatus:
             return None
 
         players = data.get("players", {})
-
         version = data.get("version", {})
-
         motd = data.get("motd", {})
 
         return {
@@ -347,10 +337,6 @@ class MinecraftStatus:
             "icon": None
         }
 
-    # -----------------------------
-    # Auto Detect
-    # -----------------------------
-
     @classmethod
     def detect(cls, host):
 
@@ -363,226 +349,334 @@ class MinecraftStatus:
 
         if srv:
 
-            java = cls.java(
+            result = cls.java(
                 srv["host"],
                 srv["port"]
             )
 
-            if java:
-                cls.set_cache(host, java)
-                return java
+            if result:
+                cls.set_cache(host, result)
+                return result
 
-        java = cls.java(host)
-
-        if java:
-            cls.set_cache(host, java)
-            return java
-
-        result = cls.api_mcstatus_java(host)
+        result = cls.java(host)
 
         if result:
             cls.set_cache(host, result)
             return result
 
-        result = cls.api_mcstatus_bedrock(host)
+        for func in (
+            cls.api_mcstatus_java,
+            cls.api_mcstatus_bedrock,
+            cls.api_mcsrvstat
+        ):
 
-        if result:
-            cls.set_cache(host, result)
-            return result
+            try:
 
-        result = cls.api_mcsrvstat(host)
+                result = func(host)
 
-        if result:
-            cls.set_cache(host, result)
-            return result
+                if result:
 
-        return cls.offline(host)
-	# -----------------------------
-    # Retry
-    # -----------------------------
+                    cls.set_cache(host, result)
+
+                    return result
+
+            except:
+                pass
+
+        return {
+            "success": False,
+            "host": host,
+            "online": False
+        }
 
     @classmethod
     def check(cls, host):
 
-        host = host.strip()
-
-        if host.startswith("minecraft://"):
-            host = host.replace("minecraft://", "")
-
-        if host.startswith("mc://"):
-            host = host.replace("mc://", "")
-
-        if host.startswith("https://"):
-            host = host.replace("https://", "")
-
-        if host.startswith("http://"):
-            host = host.replace("http://", "")
-
-        host = host.split("/")[0]
+        host = (
+            host.replace("https://", "")
+            .replace("http://", "")
+            .replace("minecraft://", "")
+            .replace("mc://", "")
+            .split("/")[0]
+            .strip()
+        )
 
         if ":" in host:
-            host, port = host.split(":", 1)
+
+            ip, port = host.split(":", 1)
 
             try:
-                port = int(port)
 
-                java = cls.java(host, port)
+                result = cls.java(
+                    ip,
+                    int(port)
+                )
 
-                if java:
-                    cls.set_cache(f"{host}:{port}", java)
-                    return java
+                if result:
+                    return result
 
             except:
                 pass
 
         for _ in range(2):
 
-            try:
+            result = cls.detect(host)
 
-                result = cls.detect(host)
-
-                if result and result.get("success"):
-                    return result
-
-            except:
-                pass
+            if result.get("success"):
+                return result
 
             time.sleep(0.4)
 
-        return cls.offline(host)
+        return {
+            "success": False,
+            "host": host,
+            "online": False
+		}
+	@classmethod
+    def format_status(cls, data):
 
-    # -----------------------------
-    # Pretty Text
-    # -----------------------------
-
-    @staticmethod
-    def format(data):
-
-        if not data["success"]:
+        if not data.get("success"):
 
             return (
-                "❌ سرور آفلاین است.\n\n"
-                f"🌐 آدرس: {data['host']}"
+                "🔴 سرور آفلاین است.\n\n"
+                f"🌐 آدرس: `{data['host']}`"
             )
 
-        edition = {
-            "Java": "☕ جاوا",
-            "Bedrock": "🪨 بدراک"
-        }.get(data["edition"], data["edition"])
+        edition = data.get("edition", "Unknown")
+        version = data.get("version", "Unknown")
+        online = data.get("players_online", 0)
+        maximum = data.get("players_max", 0)
+        latency = data.get("latency", "-")
+        motd = data.get("motd") or "ندارد"
 
-        text = (
-            "🟢 سرور آنلاین است\n\n"
-            f"🌐 آدرس: {data['host']}\n"
-            f"🎮 نسخه: {edition}\n"
-            f"📦 ورژن: {data['version']}\n"
-            f"👥 بازیکنان: {data['players_online']}/{data['players_max']}"
-        )
+        return f"""🟢 سرور آنلاین است
 
-        if data.get("latency"):
-            text += f"\n⚡ پینگ: {data['latency']} ms"
+🌐 آدرس: `{data['host']}`
+🎮 نسخه: {edition}
+📦 ورژن: {version}
+👥 بازیکنان: {online}/{maximum}
+📡 پینگ: {latency}
 
-        if data.get("motd"):
-            text += f"\n\n📜 MOTD:\n{data['motd']}"
+📜 MOTD:
+{motd}
+"""
+
+    @classmethod
+    def all_servers(cls):
+
+        text = "📋 لیست سرورهای ماینکرفت\n\n"
+
+        for name, host in cls.SERVERS:
+
+            try:
+
+                result = cls.check(host)
+
+                if result["success"]:
+
+                    emoji = "🟢"
+
+                    players = (
+                        f"{result['players_online']}/"
+                        f"{result['players_max']}"
+                    )
+
+                else:
+
+                    emoji = "🔴"
+                    players = "Offline"
+
+            except:
+
+                emoji = "⚪"
+                players = "Unknown"
+
+            text += (
+                f"{emoji} {name}\n"
+                f"🌐 `{host}`\n"
+                f"👥 {players}\n\n"
+            )
 
         return text
 
-    # -----------------------------
-    # Quick Status
-    # -----------------------------
+    @classmethod
+    def server_names(cls):
+
+        return [
+            name
+            for name, host in cls.SERVERS
+        ]
 
     @classmethod
-    def status(cls, host):
+    def server_host(cls, name):
 
-        result = cls.check(host)
+        for server_name, host in cls.SERVERS:
 
-        return cls.format(result)
+            if server_name == name:
 
+                return host
+
+        return None
 
     @classmethod
-    def list_servers(cls):
+    def refresh_cache(cls):
 
-        result = []
+        cls.CACHE.clear()
 
-        for name, ip in cls.SERVERS:
+    @classmethod
+    def preload(cls):
 
-            status = cls.check(ip)
+        for _, host in cls.SERVERS:
 
-            if status["success"]:
+            try:
 
-                players = (
-                    f"{status['players_online']}/"
-                    f"{status['players_max']}"
-                )
+                cls.detect(host)
 
-            else:
+            except:
 
-                players = "آفلاین"
+                pass
 
-            result.append({
-                "name": name,
-                "ip": ip,
-                "players": players
-            })
 
-        return result
+minecraft = MinecraftStatus()
+
+# ======== پایان کلاس ========
 # ------------------ START ------------------
 
 @bot.on_message(commands=["start"])
 async def start(bot, message):
-	if message.chat_id in ACTIVE_GROUPS:
-		keypad = (
-            ChatKeypadBuilder()
 
-            .row(
-                ChatKeypadBuilder.button_simple(
-                    id="servers",
-                    text="🌍 سرورهای ماینکرفت"
-                ),
-                ChatKeypadBuilder.button_textbox(
-                    id="status",
-                    text="🔍 استعلام سرور"
-                )
-            )
+    if message.chat_id not in ACTIVE_GROUPS:
 
-            .row(
-                ChatKeypadBuilder.button_simple(
-                    id="ads",
-                    text="📢 تبلیغات"
-                ),
-                ChatKeypadBuilder.button_simple(
-                    id="about",
-                    text="ℹ️ درباره ما"
-                )
+        ACTIVE_GROUPS[message.chat_id] = True
+        save_active_groups(ACTIVE_GROUPS)
+
+    keypad = (
+        ChatKeypadBuilder()
+
+        .row(
+            ChatKeypadBuilder.button_simple(
+                id="servers",
+                text="🌍 سرورهای ماینکرفت"
+            ),
+            ChatKeypadBuilder.button_textbox(
+                id="status",
+                title="🔍 استعلام سرور",
+                type_line="SingleLine",
+                type_keypad="String",
+                place_holder="mc.hypixel.net"
             )
-			.build()
-		)
-		await message.reply_keypad(
-			text=A_MESSAGE,
-			keypad=keypad
-		)
-		return
-	else:
-		ACTIVE_GROUPS[message.chat_id] = True
-		await message.reply(WELCOME_MESSAGE)
-		save_active_groups(ACTIVE_GROUPS)
-		return
+        )
+
+        .row(
+            ChatKeypadBuilder.button_simple(
+                id="ads",
+                text="📢 تبلیغات"
+            ),
+            ChatKeypadBuilder.button_simple(
+                id="about",
+                text="ℹ️ درباره ما"
+            )
+        )
+
+        .build()
+    )
+
+    await message.reply_keypad(
+        text=A_MESSAGE,
+        keypad=keypad
+    )
+
+
+# ------------------ لیست سرورها ------------------
+
+@bot.on_message(filters=lambda m: m.button_id == "servers")
+async def servers(bot, message):
+
+    text = "🌍 لیست سرورهای ماینکرفت\n\n"
+
+    for name, ip in SERVERS:
+
+        try:
+
+            status = MinecraftStatus.check(ip)
+
+            if status["success"]:
+                online = (
+                    f"{status['players_online']}/"
+                    f"{status['players_max']}"
+                )
+                emoji = "🟢"
+
+            else:
+                online = "آفلاین"
+                emoji = "🔴"
+
+        except:
+            emoji = "⚪"
+            online = "خطا"
+
+        text += (
+            f"{emoji} {name}\n"
+            f"🌐 `{ip}`\n"
+            f"👥 {online}\n\n"
+        )
+
+    await message.reply(text)
+
+
+# ------------------ استعلام ------------------
+
+@bot.on_message(filters=lambda m: m.button_id == "status")
+async def status(bot, message):
+
+    ip = message.data.strip()
+
+    wait = await message.reply(
+        "⏳ درحال بررسی سرور..."
+    )
+
+    result = MinecraftStatus.status(ip)
+
+    await wait.edit(result)
+
+
+# ------------------ تبلیغات ------------------
 
 @bot.on_message()
 async def handler_ads(bot, message):
-	if "/smaads " in message.text.lower():
-            tads = text_lower.replace("/smaads ", "")
-            for i in ACTIVE_GROUPS:
-                await bot.send_message(chat_id=i, text=tads)
-#استاتوس
-@bot.on_message(filters=lambda m: m.button_id == "server_ip")
-def get_status(bot, message):
-	ip = message.data
-	msg = message.reply("🔎 در حال بررسی سرور...")
-	result = MinecraftStatus.status(ip)
-	msg.edit(result)
+
+    if not message.is_text:
+        return
+
+    tl = message.text.lower()
+	if "/smaads " in tl: 
+		ad = tl.replace("/smaads ", "")
+		for c in ACTIVE_GROUPS:
+			bot.send_message(
+				text=ad
+				chat_id=c
+			)
+		return
+	elif tl == "📢 تبلیغات":
+		await message.reply("برای تبلیغ سرور خود میتوانید به آی دی زیر مراجعه کنید:\n@Mr_war_aparat")
+		return
+
+
+# ------------------ درباره ------------------
+
+@bot.on_message(filters=lambda m: m.button_id == "about")
+async def about(bot, message):
+
+    await message.reply(
+        "ℹ️ ربات استعلام سرورهای ماینکرفت\n\n"
+        "نسخه 2.0"
+    )
+
+
 # ------------------ MAIN ------------------
 
 async def main():
+
     await bot._initialize_webhook()
     await bot.geteToken()
 
@@ -590,10 +684,13 @@ async def main():
     print("Bot started successfully")
 
     while True:
+
         try:
+
             updates = await bot._fetch_updates(100)
 
             for update in updates:
+
                 try:
                     await bot._process_update(update)
                 except Exception as e:
@@ -602,8 +699,10 @@ async def main():
             await asyncio.sleep(0.05)
 
         except Exception as e:
+
             print("Main Loop Error:", e)
             await asyncio.sleep(2)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
