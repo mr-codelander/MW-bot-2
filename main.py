@@ -619,13 +619,12 @@ async def status(bot, message):
         "⏳ درحال بررسی سرور..."
     )
 
-    result = MinecraftStatus.status(ip)
-
-    await wait.edit(result)
-
+    result = MinecraftStatus.check(ip)
+	await wait.edit(
+		MinecraftStatus.format_status(result)
+	)
 
 # ------------------ تبلیغات ------------------
-
 @bot.on_message()
 async def handler_ads(bot, message):
 
@@ -633,19 +632,30 @@ async def handler_ads(bot, message):
         return
 
     tl = message.text.lower()
-	if "/smaads " in tl: 
-		ad = tl.replace("/smaads ", "")
-		for c in ACTIVE_GROUPS:
-			bot.send_message(
-				text=ad
-				chat_id=c
-			)
-		return
-	elif tl == "📢 تبلیغات":
-		await message.reply("برای تبلیغ سرور خود میتوانید به آی دی زیر مراجعه کنید:\n@Mr_war_aparat")
-		return
 
+    if tl.startswith("/smaads "):
 
+        ad = message.text[8:].strip()
+
+        for c in ACTIVE_GROUPS:
+
+            try:
+                await bot.send_message(
+                    chat_id=c,
+                    text=ad
+                )
+            except Exception:
+                pass
+
+        return
+
+    elif tl == "📢 تبلیغات":
+
+        await message.reply(
+            "برای تبلیغ سرور خود می‌توانید به آیدی زیر مراجعه کنید:\n@Mr_war_aparat"
+        )
+
+        return
 # ------------------ درباره ------------------
 
 @bot.on_message(filters=lambda m: m.button_id == "about")
