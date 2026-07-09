@@ -610,7 +610,7 @@ async def servers(bot, message):
         text += (
             f"{emoji} {name}\n"
             f"🌐 `{ip}`\n"
-            f"👥 {online}\n\n"
+            f"👥 {online}\n\n")
 			
     await wait.edit(text + "روی هر کدوم از آیپی ها کلیک کنی کپی میشه😉")
 
