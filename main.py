@@ -22,7 +22,7 @@ from rubka.keypad import ChatKeypadBuilder
 # تنظیمات
 # ==========================================
 
-TOKEN = "BIHJFI0MEOTMVGGAXRABWENZHWJGBQDPLVWMTRMLPIYWBPMRBLTTXPKQZYHHUVVJ"
+TOKEN = os.getenv("BOT_TOKEN")
 
 bot = Robot(
     token=TOKEN,
@@ -92,7 +92,7 @@ SERVERS = [
 
     ("بی قانون آباد (جاوا و بدراک)", "mc.bigmc.ir"),
 
-    ("رویال لند (جاوا و بدراک)", "RLMC.ir"),
+    ("رویال لند (بدراک)", "RLMC.ir"),
 
     ("جارتکس (جاوا)", "jartex.fun")
 ]
